@@ -1,0 +1,92 @@
+// ----------------------
+// Load locations on page load
+// ----------------------
+function onPageLoad() {
+    console.log("Page loaded");
+
+    var url = "http://127.0.0.1:5000/get_location_names";
+
+    $.get(url, function (data) {
+        if (data) {
+            var locations = data.locations;
+            $('#location').empty();
+
+            for (var i = 0; i < locations.length; i++) {
+                var opt = new Option(locations[i], locations[i]);
+                $('#location').append(opt);
+            }
+        }
+    });
+}
+
+// ----------------------
+// Get Selected Bathroom Count
+// ----------------------
+function getBathValue() {
+    let buttons = document.querySelectorAll(".btn-option[data-type='bath']");
+    for (let btn of buttons) {
+        if (btn.classList.contains("active")) {
+            return parseInt(btn.dataset.value);
+        }
+    }
+    return -1;
+}
+
+// ----------------------
+// Get Selected BHK Count
+// ----------------------
+function getBHKValue() {
+    let buttons = document.querySelectorAll(".btn-option[data-type='bhk']");
+    for (let btn of buttons) {
+        if (btn.classList.contains("active")) {
+            return parseInt(btn.dataset.value);
+        }
+    }
+    return -1;
+}
+
+// ----------------------
+// Estimate Price
+// ----------------------
+function onClickedEstimatePrice() {
+    var sqft = document.getElementById("area").value;
+    var bhk = getBHKValue();
+    var bath = getBathValue();
+    var location = document.getElementById("location").value;
+    var result = document.getElementById("priceDisplay");
+
+    var url = "http://127.0.0.1:5000/predict_home_price";
+
+    $.post(url, {
+        total_sqft: parseFloat(sqft),
+        bhk: bhk,
+        bath: bath,
+        location: location
+    }, function (data) {
+        result.innerHTML = data.estimated_price + " Lakh";
+    });
+}
+
+// ----------------------
+// Button Active Toggle
+// ----------------------
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".btn-option").forEach(btn => {
+        btn.addEventListener("click", function () {
+
+            let type = this.dataset.type;
+
+            document
+                .querySelectorAll(`.btn-option[data-type='${type}']`)
+                .forEach(b => b.classList.remove("active"));
+
+            this.classList.add("active");
+        });
+    });
+
+    document.getElementById("estimateBtn").onclick = onClickedEstimatePrice;
+});
+
+// Load locations
+window.onload = onPageLoad;
